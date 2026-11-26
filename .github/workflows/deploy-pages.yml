@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - denhandy-invoice-due-date-tracker
   workflow_dispatch:
 
 permissions:
