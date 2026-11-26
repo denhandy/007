@@ -1,0 +1,1379 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f6fa">
+  <title>Invoice due date tracker</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17243a;
+      --muted: #64728a;
+      --line: #dce3ec;
+      --paper: #ffffff;
+      --canvas: #f4f6fa;
+      --navy: #172d4d;
+      --blue: #315d96;
+      --green: #18764d;
+      --green-bg: #e6f4ec;
+      --orange: #a64e08;
+      --orange-bg: #fff1df;
+      --red: #b42332;
+      --red-bg: #fdebed;
+      --grey: #596679;
+      --grey-bg: #edf0f4;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button,
+    select {
+      cursor: pointer;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      min-height: 18px;
+      margin: 0;
+      padding: 0;
+      accent-color: var(--blue);
+      vertical-align: middle;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible {
+      outline: 3px solid #7ba9e3;
+      outline-offset: 2px;
+    }
+
+    .page {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 34px 40px 48px;
+    }
+
+    .topline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 26px;
+    }
+
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--blue);
+      font-size: 0.78rem;
+      font-weight: 750;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--navy);
+      font-size: clamp(1.8rem, 3vw, 2.45rem);
+      letter-spacing: -0.035em;
+      line-height: 1.12;
+    }
+
+    .intro {
+      max-width: 690px;
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .demo-tag {
+      flex: 0 0 auto;
+      margin-top: 6px;
+      padding: 8px 12px;
+      border: 1px solid #cbd9ea;
+      border-radius: 999px;
+      background: #edf4fc;
+      color: #284a75;
+      font-size: 0.8rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+
+    .summary-card {
+      min-height: 126px;
+      padding: 19px 21px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--paper);
+      box-shadow: 0 2px 6px rgb(23 36 58 / 3%);
+    }
+
+    .summary-label {
+      display: block;
+      margin-bottom: 14px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 650;
+    }
+
+    .summary-value {
+      display: block;
+      color: var(--navy);
+      font-size: clamp(1.55rem, 2.3vw, 2rem);
+      font-variant-numeric: tabular-nums;
+      font-weight: 760;
+      letter-spacing: -0.035em;
+      line-height: 1;
+    }
+
+    .summary-card.overdue .summary-value {
+      color: var(--red);
+    }
+
+    .summary-card.due-soon .summary-value {
+      color: var(--orange);
+    }
+
+    .section {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--paper);
+      box-shadow: 0 2px 6px rgb(23 36 58 / 3%);
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 21px 23px 17px;
+    }
+
+    .section-heading h2,
+    .form-heading h2 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 1.2rem;
+      letter-spacing: -0.02em;
+    }
+
+    .section-heading p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: end;
+      gap: 11px;
+      padding: 0 23px 19px;
+    }
+
+    .control {
+      display: grid;
+      gap: 6px;
+    }
+
+    .control.search {
+      width: min(350px, 42vw);
+    }
+
+    .control.filter {
+      width: 205px;
+    }
+
+    .control label,
+    .field label {
+      color: #42516a;
+      font-size: 0.79rem;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      min-height: 42px;
+      padding: 9px 11px;
+      border: 1px solid #cbd4e0;
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    input::placeholder {
+      color: #7a8799;
+    }
+
+    .button {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      font-size: 0.88rem;
+      font-weight: 720;
+      transition: background-color 120ms ease, border-color 120ms ease;
+    }
+
+    .button.primary {
+      background: var(--navy);
+      color: #fff;
+    }
+
+    .button.primary:hover {
+      background: #23446f;
+    }
+
+    .button.secondary {
+      border-color: #cbd4e0;
+      background: #fff;
+      color: var(--navy);
+    }
+
+    .button.secondary:hover {
+      border-color: #94a6be;
+      background: #f7f9fc;
+    }
+
+    .button[aria-disabled="true"] {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .toolbar .export-button {
+      margin-left: auto;
+    }
+
+    .selection-count {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .csv-fallback {
+      padding: 0 23px 16px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .csv-fallback summary {
+      width: fit-content;
+      cursor: pointer;
+      font-weight: 650;
+    }
+
+    .csv-fallback p {
+      margin: 9px 0;
+      line-height: 1.45;
+    }
+
+    .csv-fallback textarea {
+      display: block;
+      width: 100%;
+      min-height: 150px;
+      padding: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.77rem;
+      line-height: 1.45;
+      resize: vertical;
+    }
+
+    .csv-copy-status {
+      min-height: 1.2em;
+      margin: 0 23px 12px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .csv-copy-status.error {
+      color: var(--red);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-top: 1px solid var(--line);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    thead {
+      background: #f7f9fc;
+    }
+
+    th {
+      padding: 12px 15px;
+      color: #526179;
+      font-size: 0.73rem;
+      font-weight: 750;
+      letter-spacing: 0.055em;
+      text-transform: uppercase;
+    }
+
+    td {
+      padding: 14px 15px;
+      border-top: 1px solid #e8edf3;
+      color: #29374d;
+      font-size: 0.88rem;
+      vertical-align: middle;
+    }
+
+    tbody tr:hover {
+      background: #fafbfd;
+    }
+
+    td.invoice-number {
+      color: #284a75;
+      font-weight: 730;
+    }
+
+    td.amount,
+    td.days {
+      font-variant-numeric: tabular-nums;
+      font-weight: 670;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      font-size: 0.77rem;
+      font-weight: 720;
+    }
+
+    .status::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      content: "";
+    }
+
+    .status.overdue {
+      background: var(--red-bg);
+      color: var(--red);
+    }
+
+    .status.due-soon {
+      background: var(--orange-bg);
+      color: var(--orange);
+    }
+
+    .status.on-track {
+      background: var(--green-bg);
+      color: var(--green);
+    }
+
+    .status.paid,
+    .status.missing {
+      background: var(--grey-bg);
+      color: var(--grey);
+    }
+
+    .row-action {
+      min-height: 34px;
+      padding: 6px 10px;
+      border: 1px solid #cbd4e0;
+      border-radius: 6px;
+      background: #fff;
+      color: #284a75;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .row-action:hover {
+      border-color: #91a6c1;
+      background: #f4f8fc;
+    }
+
+    .paid-label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 650;
+    }
+
+    .empty-state {
+      padding: 34px 16px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .form-section {
+      margin-top: 22px;
+      padding: 22px 23px 24px;
+    }
+
+    .form-heading {
+      margin-bottom: 17px;
+    }
+
+    .form-heading p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .invoice-form {
+      display: grid;
+      grid-template-columns: 1fr 1.35fr 0.9fr 1fr 1fr auto;
+      align-items: end;
+      gap: 12px;
+    }
+
+    .scan-field {
+      grid-column: 1 / -1;
+      padding: 14px;
+      border: 1px dashed #b9c8da;
+      border-radius: 9px;
+      background: #f8fafd;
+    }
+
+    .scan-help,
+    .scan-status {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
+    .scan-status.error {
+      color: var(--red);
+    }
+
+    .scan-preview {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .scan-preview img {
+      display: block;
+      max-width: 180px;
+      max-height: 130px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      object-fit: contain;
+      background: #fff;
+    }
+
+    .scan-preview[hidden] {
+      display: none;
+    }
+
+    .scan-preview a {
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    .field {
+      display: grid;
+      min-width: 0;
+      gap: 6px;
+    }
+
+    .field input {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .form-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 13px;
+    }
+
+    .form-message {
+      min-height: 1.3em;
+      margin: 0;
+      color: var(--green);
+      font-size: 0.84rem;
+      font-weight: 650;
+    }
+
+    .form-message.error {
+      color: var(--red);
+    }
+
+    .footer-note {
+      margin: 21px 2px 0;
+      color: var(--muted);
+      font-size: 0.76rem;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    @media (max-width: 1050px) {
+      .page {
+        padding: 28px 24px 38px;
+      }
+
+      .invoice-form {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        padding: 23px 16px 32px;
+      }
+
+      .topline {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .demo-tag {
+        margin-top: 0;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .summary-card {
+        min-height: 108px;
+        padding: 15px;
+      }
+
+      .summary-label {
+        margin-bottom: 12px;
+        font-size: 0.8rem;
+      }
+
+      .summary-value {
+        font-size: 1.55rem;
+      }
+
+      .section-heading {
+        align-items: flex-start;
+        padding: 18px 16px 15px;
+      }
+
+      .toolbar {
+        flex-wrap: wrap;
+        padding: 0 16px 15px;
+      }
+
+      .control.search {
+        width: 100%;
+      }
+
+      .control.filter {
+        flex: 1;
+        width: auto;
+        min-width: 180px;
+      }
+
+      .toolbar .export-button {
+        margin-left: 0;
+      }
+
+      .csv-fallback {
+        padding-right: 16px;
+        padding-left: 16px;
+      }
+
+      .csv-copy-status {
+        margin-right: 16px;
+        margin-left: 16px;
+      }
+
+      th,
+      td {
+        padding-right: 12px;
+        padding-left: 12px;
+      }
+
+      .form-section {
+        padding: 19px 16px;
+      }
+
+      .invoice-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 440px) {
+      .invoice-form {
+        grid-template-columns: 1fr;
+      }
+
+      .form-footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .section-heading {
+        flex-direction: column;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topline">
+      <div>
+        <p class="eyebrow">Finance overview</p>
+        <h1>Invoice due date tracker</h1>
+        <p class="intro">A clear view of what is outstanding, what needs attention, and what has already been paid.</p>
+      </div>
+      <span class="demo-tag">Fictional training data</span>
+    </header>
+
+    <section class="summary-grid" aria-label="Invoice summary">
+      <article class="summary-card">
+        <span class="summary-label">Total unpaid</span>
+        <strong class="summary-value" id="unpaid-total">€0</strong>
+      </article>
+      <article class="summary-card overdue">
+        <span class="summary-label">Total overdue</span>
+        <strong class="summary-value" id="overdue-total">€0</strong>
+      </article>
+      <article class="summary-card due-soon">
+        <span class="summary-label">Due within 7 days</span>
+        <strong class="summary-value" id="due-soon-count">0</strong>
+      </article>
+      <article class="summary-card">
+        <span class="summary-label">Paid invoices</span>
+        <strong class="summary-value" id="paid-count">0 / 0</strong>
+      </article>
+    </section>
+
+    <section class="section" aria-labelledby="invoice-list-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="invoice-list-heading">Invoices</h2>
+          <p>Earliest due date first; higher amounts lead when dates match. Select rows for Excel export.</p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="control search">
+          <label for="client-search">Search client</label>
+          <input id="client-search" type="search" placeholder="Type a client name" autocomplete="off">
+        </div>
+        <div class="control filter">
+          <label for="status-filter">Filter by status</label>
+          <select id="status-filter">
+            <option value="all">All statuses</option>
+            <option value="Overdue">Overdue</option>
+            <option value="Due within 7 days">Due within 7 days</option>
+            <option value="On track">On track</option>
+            <option value="Paid">Paid</option>
+            <option value="Date missing">Date missing</option>
+          </select>
+        </div>
+        <a class="button secondary export-button" id="export-csv" href="#" download>Export visible rows as CSV</a>
+        <button class="button secondary" id="copy-csv" type="button">Copy CSV</button>
+        <span class="selection-count" id="selection-count" aria-live="polite">0 selected</span>
+        <a class="button secondary" id="export-xls" href="#" download aria-disabled="true">Export selected as XLS</a>
+      </div>
+      <p class="csv-copy-status" id="csv-copy-status" role="status" aria-live="polite"></p>
+      <p class="csv-copy-status" id="xls-status" role="status" aria-live="polite"></p>
+      <details class="csv-fallback" id="xls-fallback">
+        <summary>Download blocked? Copy selected rows into Excel</summary>
+        <p>Copy the selected rows, paste them into Excel or Numbers, then save the spreadsheet as <code>.xls</code>.</p>
+        <button class="button secondary" id="copy-xls" type="button" disabled>Copy selected data</button>
+        <textarea id="xls-preview" readonly spellcheck="false" aria-label="Selected invoice data for pasting into Excel"></textarea>
+      </details>
+      <details class="csv-fallback">
+        <summary>Download not appearing? View or copy the CSV</summary>
+        <p>If this browser blocks downloads, select and copy this text into a file ending in <code>.csv</code>.</p>
+        <textarea id="csv-preview" readonly spellcheck="false" aria-label="CSV content for copying"></textarea>
+      </details>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col"><input id="select-visible" type="checkbox" aria-label="Select all visible invoices"></th>
+              <th scope="col">Invoice</th>
+              <th scope="col">Client</th>
+              <th scope="col">Amount</th>
+              <th scope="col">Issued</th>
+              <th scope="col">Due date</th>
+              <th scope="col">Status</th>
+              <th scope="col">Days</th>
+              <th scope="col">Document</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody id="invoice-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section form-section" aria-labelledby="add-invoice-heading">
+      <div class="form-heading">
+        <h2 id="add-invoice-heading">Add an invoice</h2>
+        <p>New invoices are unpaid by default. All fields are required.</p>
+      </div>
+      <form class="invoice-form" id="invoice-form">
+        <div class="field scan-field">
+          <label for="invoice-document">Scan or attach the original invoice</label>
+          <input id="invoice-document" type="file" accept="image/jpeg,application/pdf" capture="environment">
+          <p class="scan-help">Take a photo or choose a JPEG/PDF (max 15 MB). This offline demo does not use OCR: check the document and enter its details manually. The file stays in this browser session and is not uploaded.</p>
+          <div class="scan-preview" id="scan-preview" hidden></div>
+          <p class="scan-status" id="scan-status" role="status" aria-live="polite"></p>
+        </div>
+        <div class="field">
+          <label for="invoice-number">Invoice number</label>
+          <input id="invoice-number" name="invoiceNumber" maxlength="30" required placeholder="e.g. DEMO-2040">
+        </div>
+        <div class="field">
+          <label for="invoice-client">Client name</label>
+          <input id="invoice-client" name="client" maxlength="70" required placeholder="Fictional client">
+        </div>
+        <div class="field">
+          <label for="invoice-amount">Amount (€)</label>
+          <input id="invoice-amount" name="amount" type="number" min="0.01" step="0.01" required placeholder="0.00">
+        </div>
+        <div class="field">
+          <label for="invoice-issued">Issue date</label>
+          <input id="invoice-issued" name="issueDate" type="date" required>
+        </div>
+        <div class="field">
+          <label for="invoice-due">Due date</label>
+          <input id="invoice-due" name="dueDate" type="date" required>
+        </div>
+        <button class="button primary" type="submit">Add invoice</button>
+      </form>
+      <div class="form-footer">
+        <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <p class="footer-note">All client names and invoice details are fictional and for training use only. Statuses are calculated using today's date on this device.</p>
+  </main>
+
+  <script>
+    "use strict";
+
+    const dateOffsets = [-18, -9, -3, 0, 2, 6, 7, 13, 22, 35, -17, -10, -30, -1, 1, 4, 7, 8, 18, -3];
+    const todayISO = getLocalISODate(new Date());
+    const invoices = [
+      { number: "DEMO-1042", client: "Aurore Événements", amount: 2480, issueDate: addDays(todayISO, -48), dueDate: addDays(todayISO, dateOffsets[0]), paid: false },
+      { number: "DEMO-1047", client: "Brumes Formation", amount: 1350, issueDate: addDays(todayISO, -39), dueDate: addDays(todayISO, dateOffsets[1]), paid: false },
+      { number: "DEMO-1051", client: "Belle-Rive Association", amount: 3180, issueDate: addDays(todayISO, -33), dueDate: addDays(todayISO, dateOffsets[2]), paid: false },
+      { number: "DEMO-1058", client: "Nuage Événementiel", amount: 960, issueDate: addDays(todayISO, -30), dueDate: addDays(todayISO, dateOffsets[3]), paid: false },
+      { number: "DEMO-1063", client: "Jardin des Possibles ONG", amount: 4275, issueDate: addDays(todayISO, -28), dueDate: addDays(todayISO, dateOffsets[4]), paid: false },
+      { number: "DEMO-1069", client: "Canal Compétences Formation", amount: 780, issueDate: addDays(todayISO, -26), dueDate: addDays(todayISO, dateOffsets[5]), paid: false },
+      { number: "DEMO-1074", client: "Saisons Événements", amount: 1890, issueDate: addDays(todayISO, -25), dueDate: addDays(todayISO, dateOffsets[6]), paid: false },
+      { number: "DEMO-1080", client: "Clair Matin Formation", amount: 5620, issueDate: addDays(todayISO, -22), dueDate: addDays(todayISO, dateOffsets[7]), paid: false },
+      { number: "DEMO-1085", client: "Pervenche Impact RSE", amount: 1140, issueDate: addDays(todayISO, -20), dueDate: addDays(todayISO, dateOffsets[8]), paid: false },
+      { number: "DEMO-1091", client: "Lucioles Formation", amount: 2750, issueDate: addDays(todayISO, -18), dueDate: addDays(todayISO, dateOffsets[9]), paid: false },
+      { number: "DEMO-1096", client: "Lierre Solidarité ONG", amount: 640, issueDate: addDays(todayISO, -50), dueDate: addDays(todayISO, dateOffsets[10]), paid: true, paidDate: todayISO },
+      { number: "DEMO-1102", client: "Orangerie Événementiel", amount: 3920, issueDate: addDays(todayISO, -17), dueDate: addDays(todayISO, dateOffsets[11]), paid: true, paidDate: todayISO },
+      { number: "DEMO-1108", client: "Horizons Solidaires ONG", amount: 1460, issueDate: addDays(todayISO, -60), dueDate: addDays(todayISO, dateOffsets[12]), paid: false },
+      { number: "DEMO-1113", client: "Lanterne Bleue Formation", amount: 910, issueDate: addDays(todayISO, -35), dueDate: addDays(todayISO, dateOffsets[13]), paid: false },
+      { number: "DEMO-1118", client: "Violette Conseil RSE", amount: 3210, issueDate: addDays(todayISO, -31), dueDate: addDays(todayISO, dateOffsets[14]), paid: false },
+      { number: "DEMO-1124", client: "Rencontres de Minuit Événements", amount: 2190, issueDate: addDays(todayISO, -29), dueDate: addDays(todayISO, dateOffsets[15]), paid: false },
+      { number: "DEMO-1130", client: "Églantine Compétences", amount: 4690, issueDate: addDays(todayISO, -27), dueDate: addDays(todayISO, dateOffsets[16]), paid: false },
+      { number: "DEMO-1135", client: "Ruisseau Formation", amount: 1575, issueDate: addDays(todayISO, -25), dueDate: addDays(todayISO, dateOffsets[17]), paid: false },
+      { number: "DEMO-1141", client: "Comètes Événements", amount: 2860, issueDate: addDays(todayISO, -21), dueDate: addDays(todayISO, dateOffsets[18]), paid: false },
+      { number: "DEMO-1148", client: "Marée Solidaire Association", amount: 980, issueDate: addDays(todayISO, -40), dueDate: addDays(todayISO, dateOffsets[19]), paid: true, paidDate: todayISO }
+    ];
+
+    const currencyFormat = new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+    const dateFormat = new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+    const rowsElement = document.getElementById("invoice-rows");
+    const searchInput = document.getElementById("client-search");
+    const statusFilter = document.getElementById("status-filter");
+    const form = document.getElementById("invoice-form");
+    const messageElement = document.getElementById("form-message");
+    const dueDateInput = document.getElementById("invoice-due");
+    const issueDateInput = document.getElementById("invoice-issued");
+    const exportLink = document.getElementById("export-csv");
+    const copyCSVButton = document.getElementById("copy-csv");
+    const csvCopyStatus = document.getElementById("csv-copy-status");
+    const csvPreview = document.getElementById("csv-preview");
+    const selectVisibleInput = document.getElementById("select-visible");
+    const selectionCount = document.getElementById("selection-count");
+    const exportXLSLink = document.getElementById("export-xls");
+    const xlsStatus = document.getElementById("xls-status");
+    const copyXLSButton = document.getElementById("copy-xls");
+    const xlsPreview = document.getElementById("xls-preview");
+    const documentInput = document.getElementById("invoice-document");
+    const scanPreview = document.getElementById("scan-preview");
+    const scanStatus = document.getElementById("scan-status");
+    const selectedInvoiceNumbers = new Set();
+    let currentCSVObjectURL = null;
+    let currentXLSObjectURL = null;
+    let selectedDocument = null;
+
+    function getLocalISODate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function addDays(isoDate, days) {
+      const parts = parseISODate(isoDate);
+      if (!parts) return "";
+      const date = new Date(parts.year, parts.month - 1, parts.day);
+      date.setDate(date.getDate() + days);
+      return getLocalISODate(date);
+    }
+
+    function parseISODate(value) {
+      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+      const [year, month, day] = value.split("-").map(Number);
+      const date = new Date(Date.UTC(year, month - 1, day));
+      if (
+        date.getUTCFullYear() !== year ||
+        date.getUTCMonth() !== month - 1 ||
+        date.getUTCDate() !== day
+      ) return null;
+      return { year, month, day };
+    }
+
+    function dateOrdinal(value) {
+      const parts = parseISODate(value);
+      return parts ? Date.UTC(parts.year, parts.month - 1, parts.day) / 86400000 : null;
+    }
+
+    function daysUntil(value) {
+      const due = dateOrdinal(value);
+      const today = dateOrdinal(todayISO);
+      return due === null || today === null ? null : due - today;
+    }
+
+    function formatDate(value) {
+      const parts = parseISODate(value);
+      if (!parts) return "n/a";
+      return dateFormat.format(new Date(parts.year, parts.month - 1, parts.day));
+    }
+
+    function getStatus(invoice) {
+      if (invoice.paid) return "Paid";
+      const days = daysUntil(invoice.dueDate);
+      if (days === null) return "Date missing";
+      if (days < 0) return "Overdue";
+      if (days <= 7) return "Due within 7 days";
+      return "On track";
+    }
+
+    function statusClass(status) {
+      return {
+        "Paid": "paid",
+        "Overdue": "overdue",
+        "Due within 7 days": "due-soon",
+        "On track": "on-track",
+        "Date missing": "missing"
+      }[status] || "missing";
+    }
+
+    function formatDays(value) {
+      const days = daysUntil(value);
+      if (days === null) return "n/a";
+      if (days < 0) return `${Math.abs(days)} ${Math.abs(days) === 1 ? "day" : "days"} late`;
+      if (days === 0) return "Due today";
+      return `${days} ${days === 1 ? "day" : "days"} left`;
+    }
+
+    function formatInvoiceDays(invoice) {
+      if (!invoice.paid) return formatDays(invoice.dueDate);
+      const due = dateOrdinal(invoice.dueDate);
+      const paid = dateOrdinal(invoice.paidDate);
+      if (due === null || paid === null) return "—";
+      const daysLate = Math.max(0, paid - due);
+      if (daysLate === 0) return "Paid on time";
+      return `Paid ${daysLate} ${daysLate === 1 ? "day" : "days"} late`;
+    }
+
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[character]);
+    }
+
+    function releaseSelectedDocument() {
+      if (!selectedDocument) return;
+      const attachedToInvoice = invoices.some((invoice) => invoice.document?.url === selectedDocument.url);
+      if (!attachedToInvoice) URL.revokeObjectURL(selectedDocument.url);
+      selectedDocument = null;
+    }
+
+    function clearScanPreview() {
+      scanPreview.replaceChildren();
+      scanPreview.hidden = true;
+    }
+
+    function showSelectedDocument(file) {
+      releaseSelectedDocument();
+      clearScanPreview();
+      scanStatus.classList.remove("error");
+
+      const extension = file.name.split(".").pop().toLowerCase();
+      const isPDF = file.type === "application/pdf" || extension === "pdf";
+      const isJPEG = file.type === "image/jpeg" || ["jpg", "jpeg"].includes(extension);
+      const maxFileSize = 15 * 1024 * 1024;
+      if (!isPDF && !isJPEG) {
+        documentInput.value = "";
+        scanStatus.textContent = "Choose a JPEG or PDF file.";
+        scanStatus.classList.add("error");
+        return;
+      }
+      if (file.size > maxFileSize) {
+        documentInput.value = "";
+        scanStatus.textContent = "The document is too large. Choose a file no bigger than 15 MB.";
+        scanStatus.classList.add("error");
+        return;
+      }
+
+      const url = URL.createObjectURL(file);
+      selectedDocument = { name: file.name, type: isPDF ? "application/pdf" : "image/jpeg", url };
+      scanPreview.hidden = false;
+
+      if (isJPEG) {
+        const image = document.createElement("img");
+        image.src = url;
+        image.alt = `Preview of ${file.name}`;
+        scanPreview.append(image);
+      } else {
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.textContent = "Open PDF to review";
+        scanPreview.append(link);
+      }
+
+      const fileName = document.createElement("span");
+      fileName.textContent = file.name;
+      scanPreview.append(fileName);
+      scanStatus.textContent = "Check this document, enter its details, then add the invoice to attach the scan.";
+    }
+
+    function amountInCents(value) {
+      return Math.round((Number(value) + Number.EPSILON) * 100);
+    }
+
+    function totalAmount(items) {
+      return items.reduce((total, invoice) => total + amountInCents(invoice.amount), 0) / 100;
+    }
+
+    function getVisibleInvoices() {
+      const searchTerm = searchInput.value.trim().toLocaleLowerCase();
+      const selectedStatus = statusFilter.value;
+
+      return sortInvoices(invoices
+        .filter((invoice) => {
+          const matchesClient = invoice.client.toLocaleLowerCase().includes(searchTerm);
+          const matchesStatus = selectedStatus === "all" || getStatus(invoice) === selectedStatus;
+          return matchesClient && matchesStatus;
+        }));
+    }
+
+    function sortInvoices(items) {
+      return items.sort((a, b) => {
+        const aDate = dateOrdinal(a.dueDate);
+        const bDate = dateOrdinal(b.dueDate);
+        if (aDate === null && bDate !== null) return 1;
+        if (aDate !== null && bDate === null) return -1;
+        if (aDate !== null && bDate !== null && aDate !== bDate) return aDate - bDate;
+        const amountOrder = Number(b.amount) - Number(a.amount);
+        return amountOrder || a.number.localeCompare(b.number);
+      });
+    }
+
+    function getSelectedInvoices() {
+      return sortInvoices(invoices.filter((invoice) => selectedInvoiceNumbers.has(invoice.number)));
+    }
+
+    function updateSelectionControls(visibleInvoices) {
+      const selectedVisibleCount = visibleInvoices.filter((invoice) => selectedInvoiceNumbers.has(invoice.number)).length;
+      selectionCount.textContent = `${selectedInvoiceNumbers.size} selected`;
+      selectVisibleInput.checked = visibleInvoices.length > 0 && selectedVisibleCount === visibleInvoices.length;
+      selectVisibleInput.indeterminate = selectedVisibleCount > 0 && selectedVisibleCount < visibleInvoices.length;
+      updateXLSExport(getSelectedInvoices());
+    }
+
+    function renderSummary() {
+      const unpaid = invoices.filter((invoice) => !invoice.paid);
+      const overdue = unpaid.filter((invoice) => getStatus(invoice) === "Overdue");
+      const dueSoon = unpaid.filter((invoice) => getStatus(invoice) === "Due within 7 days");
+      const paidCount = invoices.filter((invoice) => invoice.paid).length;
+
+      document.getElementById("unpaid-total").textContent = currencyFormat.format(totalAmount(unpaid));
+      document.getElementById("overdue-total").textContent = currencyFormat.format(totalAmount(overdue));
+      document.getElementById("due-soon-count").textContent = String(dueSoon.length);
+      document.getElementById("paid-count").textContent = `${paidCount} / ${invoices.length}`;
+    }
+
+    function renderTable() {
+      const visibleInvoices = getVisibleInvoices();
+      updateCSVExport(visibleInvoices);
+      updateSelectionControls(visibleInvoices);
+      if (visibleInvoices.length === 0) {
+        rowsElement.innerHTML = '<tr><td class="empty-state" colspan="10">No invoices match your search and status filter.</td></tr>';
+        return;
+      }
+
+      rowsElement.innerHTML = visibleInvoices.map((invoice) => {
+        const status = getStatus(invoice);
+        const documentLink = invoice.document
+          ? `<a href="${escapeHTML(invoice.document.url)}" target="_blank" rel="noopener" aria-label="View scan for invoice ${escapeHTML(invoice.number)}">View scan</a>`
+          : '<span class="paid-label">—</span>';
+        const selected = selectedInvoiceNumbers.has(invoice.number) ? "checked" : "";
+        const action = invoice.paid
+          ? '<span class="paid-label">Paid</span>'
+          : `<button class="row-action" type="button" data-mark-paid="${escapeHTML(invoice.number)}" aria-label="Mark invoice ${escapeHTML(invoice.number)} as paid">Mark as paid</button>`;
+
+        return `
+          <tr>
+            <td><input type="checkbox" data-select-invoice="${escapeHTML(invoice.number)}" aria-label="Select invoice ${escapeHTML(invoice.number)}" ${selected}></td>
+            <td class="invoice-number">${escapeHTML(invoice.number)}</td>
+            <td>${escapeHTML(invoice.client)}</td>
+            <td class="amount">${currencyFormat.format(Number(invoice.amount))}</td>
+            <td>${formatDate(invoice.issueDate)}</td>
+            <td>${formatDate(invoice.dueDate)}</td>
+            <td><span class="status ${statusClass(status)}">${escapeHTML(status)}</span></td>
+            <td class="days">${formatInvoiceDays(invoice)}</td>
+            <td>${documentLink}</td>
+            <td>${action}</td>
+          </tr>`;
+      }).join("");
+    }
+
+    function render() {
+      renderSummary();
+      renderTable();
+    }
+
+    function csvCell(value) {
+      const text = String(value ?? "");
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+
+    function makeCSV(visibleInvoices) {
+      const headers = ["Invoice number", "Client", "Amount (EUR)", "Issue date", "Due date", "Status", "Days", "Source document"];
+      const lines = [
+        headers.map(csvCell).join(","),
+        ...visibleInvoices.map((invoice) => [
+          invoice.number,
+          invoice.client,
+          Number(invoice.amount),
+          invoice.issueDate || "n/a",
+          invoice.dueDate || "n/a",
+          getStatus(invoice),
+          formatInvoiceDays(invoice),
+          invoice.document?.name || ""
+        ].map(csvCell).join(","))
+      ];
+      return `\uFEFF${lines.join("\r\n")}`;
+    }
+
+    function escapeXML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&apos;"
+      })[character]);
+    }
+
+    function xlsCell(value, type = "String", style = "") {
+      const styleAttribute = style ? ` ss:StyleID="${style}"` : "";
+      return `<Cell${styleAttribute}><Data ss:Type="${type}">${escapeXML(value)}</Data></Cell>`;
+    }
+
+    function makeXLS(selectedInvoices) {
+      const headers = ["Invoice number", "Client", "Amount (EUR)", "Issue date", "Due date", "Status", "Days", "Source document"];
+      const headerRow = `<Row>${headers.map((value) => xlsCell(value, "String", "Header")).join("")}</Row>`;
+      const invoiceRows = selectedInvoices.map((invoice) => {
+        const issueDate = parseISODate(invoice.issueDate) ? `${invoice.issueDate}T00:00:00.000` : "n/a";
+        const dueDate = parseISODate(invoice.dueDate) ? `${invoice.dueDate}T00:00:00.000` : "n/a";
+        return `<Row>${[
+          xlsCell(invoice.number),
+          xlsCell(invoice.client),
+          xlsCell(Number(invoice.amount), "Number", "Currency"),
+          xlsCell(issueDate, issueDate === "n/a" ? "String" : "DateTime", "Date"),
+          xlsCell(dueDate, dueDate === "n/a" ? "String" : "DateTime", "Date"),
+          xlsCell(getStatus(invoice)),
+          xlsCell(formatInvoiceDays(invoice)),
+          xlsCell(invoice.document?.name || "")
+        ].join("")}</Row>`;
+      }).join("");
+
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:x="urn:schemas-microsoft-com:office:excel"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+    <Title>Selected invoices</Title>
+  </DocumentProperties>
+  <Styles>
+    <Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#EAF0F8" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="Currency"><NumberFormat ss:Format="€#,##0"/></Style>
+    <Style ss:ID="Date"><NumberFormat ss:Format="Short Date"/></Style>
+  </Styles>
+  <Worksheet ss:Name="Invoices">
+    <Table>${headerRow}${invoiceRows}</Table>
+  </Worksheet>
+</Workbook>`;
+    }
+
+    function makeTSV(selectedInvoices) {
+      const headers = ["Invoice number", "Client", "Amount (EUR)", "Issue date", "Due date", "Status", "Days", "Source document"];
+      const rows = selectedInvoices.map((invoice) => [
+        invoice.number,
+        invoice.client,
+        Number(invoice.amount),
+        invoice.issueDate || "n/a",
+        invoice.dueDate || "n/a",
+        getStatus(invoice),
+        formatInvoiceDays(invoice),
+        invoice.document?.name || ""
+      ]);
+      return [headers, ...rows]
+        .map((row) => row.map((value) => String(value ?? "").replace(/[\t\r\n]+/g, " ")).join("\t"))
+        .join("\r\n");
+    }
+
+    function updateXLSExport(selectedInvoices) {
+      xlsPreview.value = makeTSV(selectedInvoices);
+      copyXLSButton.disabled = selectedInvoices.length === 0;
+      if (selectedInvoices.length === 0) {
+        exportXLSLink.href = "#";
+        exportXLSLink.setAttribute("aria-disabled", "true");
+        if (currentXLSObjectURL) {
+          const previousURL = currentXLSObjectURL;
+          setTimeout(() => URL.revokeObjectURL(previousURL), 60000);
+          currentXLSObjectURL = null;
+        }
+        return;
+      }
+
+      const workbook = makeXLS(selectedInvoices);
+      const blob = new Blob([workbook], { type: "application/vnd.ms-excel;charset=utf-8" });
+      const nextURL = URL.createObjectURL(blob);
+      if (currentXLSObjectURL) {
+        const previousURL = currentXLSObjectURL;
+        setTimeout(() => URL.revokeObjectURL(previousURL), 60000);
+      }
+      currentXLSObjectURL = nextURL;
+      exportXLSLink.href = nextURL;
+      exportXLSLink.download = `invoice-tracker-selected-${todayISO}.xls`;
+      exportXLSLink.setAttribute("aria-disabled", "false");
+    }
+
+    function updateCSVExport(visibleInvoices) {
+      const csv = makeCSV(visibleInvoices);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const nextURL = URL.createObjectURL(blob);
+      if (currentCSVObjectURL) {
+        const previousURL = currentCSVObjectURL;
+        setTimeout(() => URL.revokeObjectURL(previousURL), 60000);
+      }
+      currentCSVObjectURL = nextURL;
+      exportLink.href = nextURL;
+      exportLink.download = `invoice-tracker-${todayISO}.csv`;
+      csvPreview.value = csv.replace(/^\uFEFF/, "");
+    }
+
+    function setFormMessage(message, isError = false) {
+      messageElement.textContent = message;
+      messageElement.classList.toggle("error", isError);
+    }
+
+    dueDateInput.addEventListener("input", () => dueDateInput.setCustomValidity(""));
+    documentInput.addEventListener("change", () => {
+      const file = documentInput.files && documentInput.files[0];
+      if (file) showSelectedDocument(file);
+    });
+    issueDateInput.addEventListener("input", () => {
+      dueDateInput.setCustomValidity("");
+      if (dueDateInput.value && issueDateInput.value && dueDateInput.value < issueDateInput.value) {
+        dueDateInput.setCustomValidity("Due date must be on or after the issue date.");
+      }
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      setFormMessage("");
+
+      const formData = new FormData(form);
+      const number = String(formData.get("invoiceNumber") || "").trim();
+      const client = String(formData.get("client") || "").trim();
+      const amount = Number(formData.get("amount"));
+      const issueDate = String(formData.get("issueDate") || "");
+      const dueDate = String(formData.get("dueDate") || "");
+
+      if (!form.reportValidity()) return;
+      if (!number || !client || !Number.isFinite(amount) || amount <= 0) {
+        setFormMessage("Enter an invoice number, client name, and a positive amount.", true);
+        return;
+      }
+      if (!parseISODate(issueDate) || !parseISODate(dueDate)) {
+        setFormMessage("Enter valid issue and due dates.", true);
+        return;
+      }
+      if (dueDate < issueDate) {
+        dueDateInput.setCustomValidity("Due date must be on or after the issue date.");
+        dueDateInput.reportValidity();
+        return;
+      }
+      if (invoices.some((invoice) => invoice.number.toLocaleLowerCase() === number.toLocaleLowerCase())) {
+        setFormMessage("That invoice number is already in use.", true);
+        document.getElementById("invoice-number").focus();
+        return;
+      }
+
+      invoices.push({
+        number,
+        client,
+        amount: Math.round((amount + Number.EPSILON) * 100) / 100,
+        issueDate,
+        dueDate,
+        paid: false,
+        document: selectedDocument
+      });
+      form.reset();
+      selectedDocument = null;
+      clearScanPreview();
+      scanStatus.textContent = "";
+      setFormMessage(`Invoice ${number} added.`);
+      render();
+      document.getElementById("invoice-number").focus();
+    });
+
+    rowsElement.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-mark-paid]");
+      if (!button) return;
+      const invoice = invoices.find((item) => item.number === button.dataset.markPaid);
+      if (!invoice || invoice.paid) return;
+      invoice.paid = true;
+      invoice.paidDate = todayISO;
+      setFormMessage(`Invoice ${invoice.number} marked as paid.`);
+      render();
+    });
+
+    rowsElement.addEventListener("change", (event) => {
+      const checkbox = event.target.closest("[data-select-invoice]");
+      if (!checkbox) return;
+      if (checkbox.checked) selectedInvoiceNumbers.add(checkbox.dataset.selectInvoice);
+      else selectedInvoiceNumbers.delete(checkbox.dataset.selectInvoice);
+      updateSelectionControls(getVisibleInvoices());
+    });
+
+    selectVisibleInput.addEventListener("change", () => {
+      for (const invoice of getVisibleInvoices()) {
+        if (selectVisibleInput.checked) selectedInvoiceNumbers.add(invoice.number);
+        else selectedInvoiceNumbers.delete(invoice.number);
+      }
+      for (const checkbox of rowsElement.querySelectorAll("[data-select-invoice]")) {
+        checkbox.checked = selectedInvoiceNumbers.has(checkbox.dataset.selectInvoice);
+      }
+      updateSelectionControls(getVisibleInvoices());
+    });
+
+    searchInput.addEventListener("input", renderTable);
+    statusFilter.addEventListener("change", renderTable);
+    exportXLSLink.addEventListener("click", (event) => {
+      if (selectedInvoiceNumbers.size === 0) {
+        event.preventDefault();
+        xlsStatus.textContent = "Select at least one invoice using the table checkboxes.";
+        return;
+      }
+      xlsStatus.textContent = "Excel export requested. Check your Downloads folder.";
+    });
+    copyXLSButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(xlsPreview.value);
+        xlsStatus.textContent = "Selected rows copied. Paste them into Excel and save as .xls.";
+      } catch (error) {
+        document.getElementById("xls-fallback").open = true;
+        xlsPreview.focus();
+        xlsPreview.select();
+        xlsStatus.textContent = "Clipboard access was denied. The selected rows are highlighted; copy them manually.";
+        console.error("Could not copy selected invoice data to the clipboard.", error);
+      }
+    });
+    exportLink.addEventListener("click", () => {
+      exportLink.textContent = "Export requested — check Downloads";
+      setTimeout(() => {
+        exportLink.textContent = "Export visible rows as CSV";
+      }, 3000);
+    });
+    copyCSVButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(csvPreview.value);
+        csvCopyStatus.textContent = "CSV copied. Paste it into a text editor and save it with a .csv extension.";
+        csvCopyStatus.classList.remove("error");
+      } catch (error) {
+        document.querySelector(".csv-fallback").open = true;
+        csvPreview.focus();
+        csvPreview.select();
+        csvCopyStatus.textContent = "Clipboard access was denied. The CSV is selected below; copy it manually.";
+        csvCopyStatus.classList.add("error");
+        console.error("Could not copy CSV to the clipboard.", error);
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
